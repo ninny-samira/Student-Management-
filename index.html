@@ -1,0 +1,537 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Record Management System</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f9;
+        margin: 0;
+        padding: 20px;
+    }
+
+    header {
+        background: #183153;
+        color: white;
+        text-align: center;
+        padding: 25px;
+        border-radius: 8px;
+    }
+
+    h2 {
+        color: #183153;
+    }
+
+    .container {
+        max-width: 1100px;
+        margin: 20px auto;
+    }
+
+    .card {
+        background: white;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px #ddd;
+    }
+
+    .summary {
+        display: flex;
+        gap: 20px;
+    }
+
+    .summary .card {
+        flex: 1;
+        text-align: center;
+    }
+
+    input {
+        padding: 10px;
+        margin: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    button {
+        padding: 10px 15px;
+        margin: 5px;
+        background: #183153;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #305d91;
+    }
+
+    .delete {
+        background: #c0392b;
+    }
+
+    .edit {
+        background: #218c74;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    th, td {
+        padding: 12px;
+        border: 1px solid #ddd;
+        text-align: center;
+    }
+
+    th {
+        background: #183153;
+        color: white;
+    }
+
+    tr:nth-child(even) {
+        background: #f2f2f2;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    footer {
+        text-align: center;
+        padding: 20px;
+        color: #555;
+    }
+
+    #message {
+        color: green;
+        font-weight: bold;
+    }
+
+    @media (max-width: 600px) {
+        .summary {
+            flex-direction: column;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Student Record Management System</h1>
+    <p>Feni University</p>
+    <p>Database Management System Lab Project</p>
+</header>
+
+<div class="container">
+
+    <!-- Dashboard -->
+    <div class="summary">
+        <div class="card">
+            <h2>Total Students</h2>
+            <h1 id="totalStudents">0</h1>
+        </div>
+
+        <div class="card">
+            <h2>Average CGPA</h2>
+            <h1 id="averageCGPA">0.00</h1>
+        </div>
+    </div>
+
+    <!-- Add and Update Student -->
+    <div class="card">
+        <h2>Add / Update Student</h2>
+
+        <form id="studentForm">
+            <input type="number" id="studentId"
+                   placeholder="Student ID" required>
+
+            <input type="text" id="studentName"
+                   placeholder="Student Name" required>
+
+            <input type="text" id="department"
+                   placeholder="Department" required>
+
+            <input type="number" id="semester"
+                   placeholder="Semester"
+                   min="1" max="12" required>
+
+            <input type="number" id="cgpa"
+                   placeholder="CGPA"
+                   min="0" max="4"
+                   step="0.01" required>
+
+            <button type="submit" id="saveButton">
+                Add Student
+            </button>
+
+            <button type="button" onclick="clearForm()">
+                Clear
+            </button>
+        </form>
+
+        <p id="message"></p>
+    </div>
+
+    <!-- Search -->
+    <div class="card">
+        <h2>Search Student</h2>
+
+        <input type="text" id="searchInput"
+               placeholder="Search by ID or Name"
+               oninput="displayStudents()">
+
+        <button onclick="showAll()">Show All</button>
+        <button onclick="showCSE()">CSE Students</button>
+        <button onclick="sortCGPA()">Highest CGPA First</button>
+    </div>
+
+    <!-- SQL Demonstration -->
+    <div class="card">
+        <h2>SQL Operations Demonstration</h2>
+
+        <button onclick="updateRahim()">
+            Update Rahim CGPA to 3.85
+        </button>
+
+        <button onclick="deleteFahim()">
+            Delete Student ID 110
+        </button>
+
+        <button onclick="resetData()">
+            Reset Sample Data
+        </button>
+    </div>
+
+    <!-- Student Table -->
+    <div class="card">
+        <h2>Student Records</h2>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Student Name</th>
+                        <th>Department</th>
+                        <th>Semester</th>
+                        <th>CGPA</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody id="studentTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<footer>
+    <p>Prepared By: Fatema Tasnim Samira</p>
+    <p>Student ID: 251031045</p>
+    <p>Batch: 34th</p>
+    <p>Feni University</p>
+</footer>
+
+<script>
+
+// Original records from the SQL INSERT statement
+const initialStudents = [
+    {id:101, name:"Rahim", department:"CSE", semester:1, cgpa:3.50},
+    {id:102, name:"Karim", department:"EEE", semester:2, cgpa:3.70},
+    {id:103, name:"Sadia", department:"CSE", semester:3, cgpa:3.90},
+    {id:104, name:"Nadia", department:"BBA", semester:4, cgpa:3.40},
+    {id:105, name:"Hasan", department:"EEE", semester:5, cgpa:3.20},
+    {id:106, name:"Rafi", department:"CSE", semester:6, cgpa:3.80},
+    {id:107, name:"Mim", department:"BBA", semester:2, cgpa:3.60},
+    {id:108, name:"Sakib", department:"CSE", semester:4, cgpa:3.10},
+    {id:109, name:"Tania", department:"EEE", semester:3, cgpa:3.75},
+    {id:110, name:"Fahim", department:"BBA", semester:1, cgpa:3.30}
+];
+
+// Load saved records or use the original data
+let students;
+
+try {
+    const saved = JSON.parse(
+        localStorage.getItem("studentRecords")
+    );
+
+    students = Array.isArray(saved)
+        ? saved
+        : initialStudents.map(s => ({...s}));
+
+} catch (error) {
+    students = initialStudents.map(s => ({...s}));
+}
+
+let editingId = null;
+let filterMode = "all";
+
+// Save records in browser storage
+function saveData() {
+    localStorage.setItem(
+        "studentRecords",
+        JSON.stringify(students)
+    );
+}
+
+// Display student records
+function displayStudents() {
+
+    const table = document.getElementById("studentTable");
+    const search = document.getElementById("searchInput")
+        .value.toLowerCase().trim();
+
+    table.innerHTML = "";
+
+    let records = students.filter(student =>
+        String(student.id).includes(search) ||
+        student.name.toLowerCase().includes(search)
+    );
+
+    // Filter CSE department
+    if (filterMode === "cse") {
+        records = records.filter(
+            student => student.department.toUpperCase() === "CSE"
+        );
+    }
+
+    // Sort by CGPA descending
+    if (filterMode === "sort") {
+        records.sort((a, b) => b.cgpa - a.cgpa);
+    }
+
+    records.forEach(student => {
+
+        const row = document.createElement("tr");
+
+        const values = [
+            student.id,
+            student.name,
+            student.department,
+            student.semester,
+            Number(student.cgpa).toFixed(2)
+        ];
+
+        values.forEach(value => {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            row.appendChild(cell);
+        });
+
+        const actions = document.createElement("td");
+
+        const editButton = document.createElement("button");
+        editButton.textContent = "Edit";
+        editButton.className = "edit";
+        editButton.onclick = () => editStudent(student.id);
+
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Delete";
+        deleteButton.className = "delete";
+        deleteButton.onclick = () => deleteStudent(student.id);
+
+        actions.appendChild(editButton);
+        actions.appendChild(deleteButton);
+        row.appendChild(actions);
+        table.appendChild(row);
+    });
+
+    updateSummary();
+}
+
+// Calculate total students and average CGPA
+function updateSummary() {
+
+    const total = students.length;
+
+    const sum = students.reduce(
+        (value, student) => value + Number(student.cgpa), 0
+    );
+
+    const average = total === 0 ? 0 : sum / total;
+
+    document.getElementById("totalStudents").textContent = total;
+
+    document.getElementById("averageCGPA").textContent =
+        (Math.round((average + Number.EPSILON) * 100) / 100)
+        .toFixed(2);
+}
+
+// Add or update student
+document.getElementById("studentForm")
+.addEventListener("submit", function(event) {
+
+    event.preventDefault();
+
+    const id = Number(document.getElementById("studentId").value);
+    const name = document.getElementById("studentName").value.trim();
+    const department = document.getElementById("department")
+        .value.trim();
+    const semester = Number(document.getElementById("semester").value);
+    const cgpa = Number(document.getElementById("cgpa").value);
+
+    if (!Number.isInteger(id) || id <= 0 ||
+        !name || !department ||
+        !Number.isInteger(semester) ||
+        semester < 1 || semester > 12 ||
+        cgpa < 0 || cgpa > 4) {
+
+        alert("Please enter valid student information.");
+        return;
+    }
+
+    if (editingId === null) {
+
+        if (students.some(student => student.id === id)) {
+            alert("Student ID already exists!");
+            return;
+        }
+
+        students.push({id, name, department, semester, cgpa});
+        showMessage("Student added successfully!");
+
+    } else {
+
+        const student = students.find(s => s.id === editingId);
+
+        if (student) {
+            student.name = name;
+            student.department = department;
+            student.semester = semester;
+            student.cgpa = cgpa;
+        }
+
+        showMessage("Student updated successfully!");
+    }
+
+    saveData();
+    clearForm();
+    showAll();
+});
+
+// Edit student
+function editStudent(id) {
+
+    const student = students.find(s => s.id === id);
+    if (!student) return;
+
+    editingId = id;
+
+    document.getElementById("studentId").value = student.id;
+    document.getElementById("studentId").readOnly = true;
+    document.getElementById("studentName").value = student.name;
+    document.getElementById("department").value = student.department;
+    document.getElementById("semester").value = student.semester;
+    document.getElementById("cgpa").value = student.cgpa;
+
+    document.getElementById("saveButton").textContent =
+        "Update Student";
+
+    window.scrollTo({top: 0, behavior: "smooth"});
+}
+
+// Delete student
+function deleteStudent(id) {
+
+    if (confirm("Are you sure you want to delete this student?")) {
+
+        students = students.filter(student => student.id !== id);
+
+        saveData();
+        displayStudents();
+        showMessage("Student deleted successfully!");
+    }
+}
+
+// SQL UPDATE example
+function updateRahim() {
+
+    const student = students.find(s => s.id === 101);
+
+    if (student) {
+        student.cgpa = 3.85;
+        saveData();
+        displayStudents();
+        showMessage("Rahim's CGPA updated to 3.85.");
+    } else {
+        showMessage("Student ID 101 not found.");
+    }
+}
+
+// SQL DELETE example
+function deleteFahim() {
+
+    const student = students.find(s => s.id === 110);
+
+    if (student) {
+        deleteStudent(110);
+    } else {
+        showMessage("Student ID 110 is already deleted.");
+    }
+}
+
+// Show all students
+function showAll() {
+    filterMode = "all";
+    document.getElementById("searchInput").value = "";
+    displayStudents();
+}
+
+// Show CSE students
+function showCSE() {
+    filterMode = "cse";
+    displayStudents();
+}
+
+// Order by CGPA descending
+function sortCGPA() {
+    filterMode = "sort";
+    displayStudents();
+}
+
+// Reset sample records
+function resetData() {
+
+    if (confirm("Reset all records to the original 10 students?")) {
+
+        students = initialStudents.map(s => ({...s}));
+        saveData();
+        clearForm();
+        showAll();
+        showMessage("Original student data restored!");
+    }
+}
+
+// Clear form
+function clearForm() {
+
+    document.getElementById("studentForm").reset();
+    document.getElementById("studentId").readOnly = false;
+    document.getElementById("saveButton").textContent =
+        "Add Student";
+
+    editingId = null;
+}
+
+// Display status message
+function showMessage(message) {
+    document.getElementById("message").textContent = message;
+}
+
+// Load student records when page opens
+displayStudents();
+
+</script>
+
+</body>
+</html>
